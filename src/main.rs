@@ -2,12 +2,14 @@ use rfd::FileDialog;
 use std::fs::File;
 use std::io::Read;
 use serde_json::Value;
+use pyo3::prelude::*;
 
 use iced::widget::{Button, Column, Container, Text};
 
 use iced::{Element, Settings, Sandbox};
 
 fn main() -> Result<(), iced::Error> {
+    pyo3::prepare_freethreaded_python();
     MyApp::run(Settings::default())
 }
 
@@ -19,6 +21,7 @@ struct MyApp {
 #[derive(Debug, Clone, Copy)]
 enum MyAppMessage {
     OpenFile,
+    SecondButton,
 }
 
 impl Sandbox for MyApp {
@@ -63,6 +66,12 @@ impl Sandbox for MyApp {
                     None => println!("No file selected"),
                 }
             }
+            MyAppMessage::SecondButton => {
+                pyo3::Python::with_gil(|py| {
+                    py.run("print('Hello, World!')", None, None)
+                        .expect("Failed to execute Python code");
+                });
+            }
         }
     }
 
@@ -70,8 +79,12 @@ impl Sandbox for MyApp {
         let open_file_button = Button::new(Text::new("Open File"))
             .on_press(MyAppMessage::OpenFile);
 
+        let second_button = Button::new(Text::new("Second Button"))
+            .on_press(MyAppMessage::SecondButton);
+
         let mut col = Column::new();
         col = col.push(open_file_button);
+        col = col.push(second_button);
 
         if let Some(file_path) = &self.file_path {
             col = col.push(Text::new(file_path).width(iced::Length::Fill));
