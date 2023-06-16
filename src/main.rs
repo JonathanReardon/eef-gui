@@ -5,7 +5,6 @@ use serde_json::Value;
 use pyo3::prelude::*;
 
 use iced::widget::{Button, Column, Container, Text};
-
 use iced::{Element, Settings, Sandbox};
 
 fn main() -> Result<(), iced::Error> {
@@ -66,12 +65,34 @@ impl Sandbox for MyApp {
                     None => println!("No file selected"),
                 }
             }
+
             MyAppMessage::SecondButton => {
-                pyo3::Python::with_gil(|py| {
-                    py.run("print('Hello, World!')", None, None)
-                        .expect("Failed to execute Python code");
+                Python::with_gil(|py| {
+
+                    
+
+                    let module = PyModule::import(py, "funcs").expect("No flying for you.");
+
+                    //let _my_function = module.getattr("test_func").unwrap();
+
+                    //let result = _my_function.call0().unwrap();
+
+                    let load_json = module.getattr("load_json").unwrap();
+                    let get_metadata = module.getattr("get_metadata").unwrap();
+
+
+                    if let Some(file_path) = &self.file_path {
+                        let data: PyObject = load_json.call1((file_path,)).unwrap().extract().unwrap();
+
+                        let var = "ShortTitle"; // Replace with your desired variable
+                        let metadata: PyObject = get_metadata.call1((data, var)).unwrap().extract().unwrap();
+
+                        // Print metadata
+                        println!("Metadata: {}", metadata);
+                    }
                 });
             }
+            
         }
     }
 
