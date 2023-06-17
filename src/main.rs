@@ -15,6 +15,7 @@ fn main() -> Result<(), iced::Error> {
 struct MyApp {
     file_path: Option<String>,
     file_contents: String,
+    metadata: Option<String>, // new field to store metadata
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -30,6 +31,7 @@ impl Sandbox for MyApp {
         MyApp {
             file_path: None,
             file_contents: String::new(),
+            metadata: None, // initialize metadata as none
         }
     }
 
@@ -68,27 +70,43 @@ impl Sandbox for MyApp {
 
             MyAppMessage::SecondButton => {
                 Python::with_gil(|py| {
-
-                    
-
                     let module = PyModule::import(py, "funcs").expect("No flying for you.");
-
-                    //let _my_function = module.getattr("test_func").unwrap();
-
-                    //let result = _my_function.call0().unwrap();
-
                     let load_json = module.getattr("load_json").unwrap();
                     let get_metadata = module.getattr("get_metadata").unwrap();
+                    let get_data = module.getattr("get_data").unwrap();
+                    let save_func = module.getattr("save_dataframe_to_csv").unwrap();
 
+                    // Import the student_gender variable from Python
+                    let student_gender: PyObject = module.getattr("student_gender").unwrap().extract().unwrap();
 
+                    // Import the publication type variable from Python
+                    let publication_type: PyObject = module.getattr("publication_type_output").unwrap().extract().unwrap();
+                    
                     if let Some(file_path) = &self.file_path {
+                        // load json data
                         let data: PyObject = load_json.call1((file_path,)).unwrap().extract().unwrap();
 
-                        let var = "ShortTitle"; // Replace with your desired variable
-                        let metadata: PyObject = get_metadata.call1((data, var)).unwrap().extract().unwrap();
+                        // get "ShortTitle" data
+                        let var1 = "ShortTitle"; // Replace with your desired variable
+                        let ShortTitle: PyObject = get_metadata.call1((data.clone_ref(py), var1)).unwrap().extract().unwrap();
 
-                        // Print metadata
-                        println!("Metadata: {}", metadata);
+                        // get "Year" data
+                        let var2 = "Year"; // Replace with your desired variable
+                        let Year: PyObject = get_metadata.call1((data.clone_ref(py), var2)).unwrap().extract().unwrap();
+
+                        // Call get_data function with student_gender data
+                        let gender: PyObject = get_data.call1((data.clone_ref(py), student_gender)).unwrap().extract().unwrap();
+
+                        // Call get_data function with student_gender data
+                        let pub_type: PyObject = get_data.call1((data, publication_type)).unwrap().extract().unwrap();
+
+                        // Print data
+                        println!("Gender: {}", gender);
+                        println!("ShortTitle: {}", ShortTitle);
+                        println!("Year: {}", Year);
+                        println!("Pub Type: {}", pub_type);
+
+
                     }
                 });
             }
