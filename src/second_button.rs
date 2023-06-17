@@ -1,8 +1,8 @@
 use pyo3::prelude::*;
 use pyo3::types::PyTuple;
 
-pub fn handle_second_button(file_path: &Option<String>) -> Option<String> {
-    let result = Python::with_gil(|py| {
+pub fn handle_second_button(file_path: &Option<String>) -> Option<(String, String)> {
+    let result: Option<(String, String)> = Python::with_gil(|py| {
         // Load Python module
         let module = PyModule::import(py, "funcs").expect("No flying for you.");
         let load_json = module.getattr("load_json").unwrap();
@@ -29,7 +29,7 @@ pub fn handle_second_button(file_path: &Option<String>) -> Option<String> {
 
             // get "eppiID" data
             let var1 = "ItemId"; // Replace with your desired variable
-            let EppiID: PyObject = get_metadata.call1((data.clone_ref(py), var1)).unwrap().extract().unwrap();
+            let eppi_id: PyObject = get_metadata.call1((data.clone_ref(py), var1)).unwrap().extract().unwrap();
 
             // get "ShortTitle" data
             let var2 = "ShortTitle"; // Replace with your desired variable
@@ -49,7 +49,7 @@ pub fn handle_second_button(file_path: &Option<String>) -> Option<String> {
             let study_real: PyObject = get_data.call1((data, study_realism)).unwrap().extract().unwrap();
 
             // Print data
-            //println!("EppiID: {}", EppiID);
+            //println!("EppiID: {}", eppi_id);
             //println!("Gender: {}", gender);
             //println!("ShortTitle: {}", ShortTitle);
             //println!("Year: {}", Year);
@@ -57,7 +57,7 @@ pub fn handle_second_button(file_path: &Option<String>) -> Option<String> {
             //println!("Study Realism: {}", study_real);
 
             // Return the gender value
-            Some(gender.to_string())
+            Some((gender.to_string(), eppi_id.to_string()))
         } else {
             None
         }
